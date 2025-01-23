@@ -1,0 +1,19 @@
+{
+  "name": "key-management",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "build": "tailwindcss build src/index.css -o public/dist/output.css",
+    "vercel-build": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.0"
+  }
+} 

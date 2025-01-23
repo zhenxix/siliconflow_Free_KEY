@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硅基Key管理</title>
+    <link href="/dist/output.css" rel="stylesheet">
+    <style>
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .results-content {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* 更新背景样式 */
+        .bg-pattern {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(34, 197, 94, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(236, 72, 153, 0.1) 0px, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* 更新玻璃拟态效果 */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.07),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 添加卡片悬浮效果 */
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* 更新动态背景元素 */
+        .floating-circles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-circles div {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.08;
+            filter: blur(40px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .floating-circles div:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(45deg, #3b82f6, #60a5fa);
+            left: -5%;
+            top: 10%;
+        }
+
+        .floating-circles div:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, #22c55e, #4ade80);
+            right: -5%;
+            top: 30%;
+            animation-delay: -7s;
+        }
+
+        .floating-circles div:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(45deg, #ec4899, #f472b6);
+            left: 20%;
+            bottom: 10%;
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+
+        /* 添加装饰元素 */
+        .decoration {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .decoration-dots {
+            background-image: radial-gradient(circle, #3b82f6 1px, transparent 1px);
+            background-size: 20px 20px;
+            width: 100px;
+            height: 100px;
+            top: 50px;
+            right: 50px;
+        }
+
+        .decoration-lines {
+            border-left: 2px dashed rgba(59, 130, 246, 0.2);
+            height: 100px;
+            position: absolute;
+            left: 50px;
+            bottom: 50px;
+        }
+
+        /* 添加按钮动画效果 */
+        .btn-animate {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-animate::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.6s, opacity 0.6s;
+        }
+
+        .btn-animate:active::after {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            transition: 0s;
+        }
+
+        /* 添加输入框聚焦效果 */
+        .input-focus-effect {
+            position: relative;
+        }
+
+        .input-focus-effect::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .input-focus-effect:focus-within::after {
+            transform: scaleX(1);
+        }
+
+        /* 添加卡片容器样式 */
+        .card-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 2rem;
+        }
+
+        /* 左侧边栏样式 */
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .quick-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box.success {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .stat-box.warning {
+            background: rgba(234, 179, 8, 0.1);
+        }
+
+        /* 右侧边栏样式 */
+        .activity-feed {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 更新主内容区样式 */
+        .main-content {
+            min-height: 600px;
+        }
+
+        /* 添加 Logo 样式 */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        /* 更新导航样式 */
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 0.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen">
+    <!-- 背景动画元素 -->
+    <div class="floating-circles">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <!-- 装饰元素 -->
+    <div class="decoration decoration-dots"></div>
+    <div class="decoration decoration-lines"></div>
+
+    <div class="card-container">
+        <!-- 左侧边栏 -->
+        <div class="left-sidebar">
+            <!-- Logo -->
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mt-4">硅基Key管理</h1>
+                <p class="text-gray-600 text-sm mt-2">密钥管理与验证系统</p>
+            </div>
+
+            <!-- 快速统计 -->
+            <div class="sidebar-card">
+                <h3 class="text-lg font-semibold mb-4">系统概况</h3>
+                <div class="quick-stats">
+                    <div class="stat-box">
+                        <div class="text-sm text-gray-600">剩余密钥</div>
+                        <div class="text-2xl font-bold text-blue-600" id="keyCount">--</div>
+                    </div>
+                    <div class="stat-box success">
+                        <div class="text-sm text-gray-600">今日使用</div>
+                        <div class="text-2xl font-bold text-green-600" id="todayUsage">0</div>
+                    </div>
+                    <div class="stat-box warning">
+                        <div class="text-sm text-gray-600">验证次数</div>
+                        <div class="text-2xl font-bold text-yellow-600" id="verifyCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="sidebar-card">
+                <h3 class="text-lg font-semibold mb-4">使用说明</h3>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <p>• 获取密钥：点击获取按钮随机获取一个可用密钥</p>
+                    <p>• 验证密钥：支持批量验证多个密钥</p>
+                    <p>• 复制功能：可一键复制有效密钥</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 导航标签 -->
+            <div class="nav-tabs">
+                <button onclick="toggleView('get')" id="getKeyNav" class="nav-tab active">
+                    获取密钥
+                </button>
+                <button onclick="toggleView('verify')" id="verifyNav" class="nav-tab">
+                    验证密钥
+                </button>
+            </div>
+
+            <!-- 获取密钥页面 -->
+            <div id="getKeyPage" class="glass-effect rounded-xl shadow-sm overflow-hidden hover-lift">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <h1 class="text-2xl font-bold text-gray-900">获取新密钥</h1>
+                        <p class="mt-2 text-gray-600">从可用密钥池中随机获取一个密钥</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <button id="getKeyBtn" 
+                                class="btn-animate w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-lg font-medium">
+                            获取密钥
+                        </button>
+                        
+                        <div id="keyResult" class="hidden fade-in">
+                            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                                <p class="text-sm text-gray-600 mb-3">您的新密钥：</p>
+                                <div class="flex items-center space-x-3">
+                                    <code id="keyDisplay" class="flex-1 bg-white p-4 rounded-lg border border-gray-200 text-sm font-mono break-all"></code>
+                                    <button id="copyBtn" 
+                                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 focus:outline-none transition-colors font-medium">
+                                        复制
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 验证密钥页面 -->
+            <div id="verifyPage" class="hidden glass-effect rounded-xl shadow-sm overflow-hidden hover-lift">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <h1 class="text-2xl font-bold text-gray-900">验证密钥</h1>
+                        <p class="mt-2 text-gray-600">输入密钥进行验证，每行一个</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="input-focus-effect">
+                            <textarea 
+                                id="tokens" 
+                                class="w-full h-40 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                placeholder="请输入密钥，每行一个"></textarea>
+                        </div>
+                        
+                        <button id="checkButton" 
+                                class="btn-animate w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-lg font-medium">
+                            开始验证
+                        </button>
+
+                        <div class="space-y-6 mt-8">
+                            <div>
+                                <h3 class="text-base font-medium text-gray-900 mb-3">有效密钥</h3>
+                                <div id="validResults" class="results-content bg-green-50 border-l-4 border-green-500"></div>
+                                <button id="copyButton" 
+                                        class="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hidden">
+                                    复制有效密钥
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-base font-medium text-gray-900 mb-3">无效密钥</h3>
+                                <div id="invalidResults" class="results-content bg-red-50 border-l-4 border-red-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧边栏 -->
+        <div class="right-sidebar">
+            <!-- 系统状态 -->
+            <div class="sidebar-card">
+                <h3 class="text-lg font-semibold mb-4">系统状态</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">API 服务</span>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">正常</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">验证服务</span>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">正常</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">响应时间</span>
+                        <span class="text-sm text-gray-800" id="responseTime">获取中...</span>
+                    </div>
+                    <div class="border-t border-gray-100 my-2"></div>
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1">访问信息</div>
+                        <div class="text-sm space-y-1">
+                            <div class="flex items-center text-gray-800">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                </svg>
+                                <span id="visitorIp">获取中...</span>
+                            </div>
+                            <div class="flex items-center text-gray-800">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span id="visitorLocation">获取中...</span>
+                            </div>
+                            <div class="flex items-center text-gray-800">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                                </svg>
+                                <span id="visitorNetwork">获取中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近活动 -->
+            <div class="sidebar-card">
+                <h3 class="text-lg font-semibold mb-4">最近活动</h3>
+                <div class="activity-feed">
+                    <div class="activity-item">
+                        <div class="text-green-600">密钥获取成功</div>
+                        <div class="text-gray-500 text-xs mt-1">2分钟前</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="text-blue-600">批量验证完成</div>
+                        <div class="text-gray-500 text-xs mt-1">10分钟前</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="text-green-600">密钥获取成功</div>
+                        <div class="text-gray-500 text-xs mt-1">15分钟前</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 切换页面显示
+        function toggleView(view) {
+            const getKeyPage = document.getElementById('getKeyPage');
+            const verifyPage = document.getElementById('verifyPage');
+            const getKeyNav = document.getElementById('getKeyNav');
+            const verifyNav = document.getElementById('verifyNav');
+
+            if (view === 'get') {
+                getKeyPage.classList.remove('hidden');
+                verifyPage.classList.add('hidden');
+                getKeyNav.classList.add('active');
+                verifyNav.classList.remove('active');
+            } else {
+                getKeyPage.classList.add('hidden');
+                verifyPage.classList.remove('hidden');
+                getKeyNav.classList.remove('active');
+                verifyNav.classList.add('active');
+            }
+        }
+
+        // 更新密钥数量显示
+        async function updateKeyCount() {
+            try {
+                const response = await fetch('/api/key-count');
+                const data = await response.json();
+                document.getElementById('keyCount').textContent = data.count;
+            } catch (error) {
+                document.getElementById('keyCount').textContent = '获取失败';
+            }
+        }
+
+        // 页面加载时获取密钥数量
+        updateKeyCount();
+
+        // 更新使用统计显示
+        async function updateUsageStats() {
+            try {
+                const response = await fetch('/api/usage-stats');
+                const data = await response.json();
+                document.getElementById('todayUsage').textContent = data.count;
+                document.getElementById('verifyCount').textContent = data.verifyCount;
+            } catch (error) {
+                document.getElementById('todayUsage').textContent = '获取失败';
+                document.getElementById('verifyCount').textContent = '获取失败';
+            }
+        }
+
+        // 页面加载时获取统计数据
+        updateUsageStats();
+
+        // 修改获取密钥的事件处理
+        document.getElementById('getKeyBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/get-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('keyResult').classList.remove('hidden');
+                    document.getElementById('keyDisplay').textContent = data.key;
+                    document.getElementById('todayUsage').textContent = data.todayUsage;
+                    updateKeyCount();
+
+                    // 添加到最近活动
+                    const activityFeed = document.querySelector('.activity-feed');
+                    const activityItem = document.createElement('div');
+                    activityItem.className = 'activity-item';
+                    activityItem.innerHTML = `
+                        <div class="text-green-600">密钥获取成功</div>
+                        <div class="text-gray-500 text-xs mt-1">刚刚</div>
+                    `;
+                    activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+
+                    // 限制显示的活动数量
+                    if (activityFeed.children.length > 10) {
+                        activityFeed.removeChild(activityFeed.lastChild);
+                    }
+                } else {
+                    alert(data.error || '获取密钥失败');
+                }
+            } catch (error) {
+                alert('服务器错误，请稍后重试');
+            }
+        });
+
+        // 复制功能
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const keyText = document.getElementById('keyDisplay').textContent;
+            navigator.clipboard.writeText(keyText)
+                .then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    btn.textContent = '已复制';
+                    btn.classList.add('bg-green-100', 'text-green-700');
+                    setTimeout(() => {
+                        btn.textContent = '复制';
+                        btn.classList.remove('bg-green-100', 'text-green-700');
+                    }, 2000);
+                })
+                .catch(() => alert('复制失败，请手动复制'));
+        });
+
+        // 修改验证函数
+        async function checkToken(token) {
+            try {
+                // 首先调用我们的验证 API
+                const verifyResponse = await fetch('/api/verify-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key: token })
+                });
+                
+                // 获取验证结果
+                const verifyData = await verifyResponse.json();
+                
+                // 更新验证次数显示（如果返回了）
+                if (verifyData.verifyCount !== undefined) {
+                    document.getElementById('verifyCount').textContent = verifyData.verifyCount;
+                }
+
+                // 然后验证 API 的可用性
+                const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/0.8.7 Chrome/120.0.6099.291 Electron/28.3.3 Safari/537.36',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'x-api-key': token,
+                        'Accept-Language': 'zh-CN'
+                    },
+                    body: JSON.stringify({
+                        "model": "Qwen/Qwen2.5-14B-Instruct",
+                        "messages": [{"role": "user", "content": "hi"}],
+                        "max_tokens": 100,
+                        "stream": false
+                    })
+                });
+
+                if (response.ok) {
+                    const balanceResponse = await fetch('https://api.siliconflow.cn/v1/user/info', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const balanceData = await balanceResponse.json();
+                    const balance = balanceData.data.totalBalance;
+                    return { token, isValid: true, balance };
+                } else {
+                    const errorData = await response.json();
+                    return { token, isValid: false, message: errorData.message };
+                }
+            } catch (error) {
+                return { token, isValid: false, message: `请求失败: ${error.message}` };
+            }
+        }
+
+        // 修改批量验证函数
+        async function checkTokens() {
+            const tokensTextarea = document.getElementById('tokens');
+            const checkButton = document.getElementById('checkButton');
+            const validResults = document.getElementById('validResults');
+            const invalidResults = document.getElementById('invalidResults');
+            const copyButton = document.getElementById('copyButton');
+
+            const tokens = tokensTextarea.value.split('\n').filter(token => token.trim() !== '');
+
+            if (tokens.length === 0) {
+                alert('请输入至少一个密钥');
+                return;
+            }
+
+            checkButton.disabled = true;
+            checkButton.innerHTML = '<span class="loader"></span>验证中...';
+            validResults.textContent = '';
+            invalidResults.innerHTML = '';
+            copyButton.style.display = 'none';
+
+            // 添加到最近活动
+            const activityFeed = document.querySelector('.activity-feed');
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item';
+            activityItem.innerHTML = `
+                <div class="text-blue-600">开始批量验证 ${tokens.length} 个密钥</div>
+                <div class="text-gray-500 text-xs mt-1">刚刚</div>
+            `;
+            activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+
+            const results = await Promise.all(tokens.map(checkToken));
+
+            const validTokens = results.filter(r => r.isValid).map(r => `${r.token} (余额: ${r.balance})`);
+            const invalidTokens = results.filter(r => !r.isValid);
+
+            validResults.textContent = validTokens.join('\n');
+
+            invalidTokens.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'p-2 mb-2 bg-white rounded border border-red-200';
+                div.innerHTML = `
+                    <div class="text-sm">
+                        <div class="font-mono mb-1">${result.token}</div>
+                        <div class="text-red-600">${result.message}</div>
+                    </div>
+                `;
+                invalidResults.appendChild(div);
+            });
+
+            if (validTokens.length > 0) {
+                copyButton.style.display = 'block';
+            }
+
+            checkButton.disabled = false;
+            checkButton.textContent = '开始验证';
+        }
+
+        document.getElementById('checkButton').addEventListener('click', checkTokens);
+
+        document.getElementById('copyButton').addEventListener('click', () => {
+            const validResults = document.getElementById('validResults');
+            const tokens = validResults.textContent.split('\n').map(line => line.split(' ')[0]);
+            navigator.clipboard.writeText(tokens.join('\n'))
+                .then(() => {
+                    const btn = document.getElementById('copyButton');
+                    btn.textContent = '复制成功';
+                    btn.classList.add('bg-green-700');
+                    setTimeout(() => {
+                        btn.textContent = '复制有效密钥';
+                        btn.classList.remove('bg-green-700');
+                    }, 2000);
+                })
+                .catch(() => alert('复制失败，请手动复制'));
+        });
+
+        // IP 信息回调函数
+        function callback(ip, location, asn, org) {
+            document.getElementById('visitorIp').textContent = ip;
+            document.getElementById('visitorLocation').textContent = location;
+            document.getElementById('visitorNetwork').textContent = org;
+        }
+
+        // 加载 IP 信息
+        function loadVisitorInfo() {
+            const script = document.createElement('script');
+            script.src = 'https://ping0.cc/geo/jsonp/callback';
+            document.body.appendChild(script);
+        }
+
+        // 页面加载时获取访问者信息
+        loadVisitorInfo();
+
+        // 在 script 部分添加响应时间监控功能
+        async function checkApiResponseTime() {
+            const startTime = performance.now();
+            try {
+                const response = await fetch('/api/key-count');
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                document.getElementById('responseTime').textContent = `${responseTime}ms`;
+            } catch (error) {
+                document.getElementById('responseTime').textContent = '获取失败';
+            }
+        }
+
+        // 定期更新响应时间
+        function startResponseTimeMonitor() {
+            checkApiResponseTime(); // 立即检查一次
+            // 每30秒更新一次
+            setInterval(checkApiResponseTime, 30000);
+        }
+
+        // 页面加载时启动响应时间监控
+        document.addEventListener('DOMContentLoaded', () => {
+            startResponseTimeMonitor();
+            // ... 其他初始化代码 ...
+        });
+    </script>
+</body>
+</html> 
