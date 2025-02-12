@@ -39,7 +39,7 @@
 ### 3 git拉取
 
 ```bash
-git clone https://github.com/你的用户名/siliconflow_Free_KEY.git
+git clone https://github.com/zhenxix/siliconflow_Free_KEY.git
 ```
 
 ### 4 npm启动
